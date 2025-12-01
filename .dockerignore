@@ -1,0 +1,23 @@
+# Don't copy these files into Docker image
+.env
+.env.example
+*.md
+.git
+.gitignore
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.log
+*.wav
+*.mp3
+output*.wav
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+test_config.py
+CHANGES.md
+DEPLOYMENT.md
