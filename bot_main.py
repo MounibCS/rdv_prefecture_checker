@@ -89,6 +89,11 @@ def solve_captcha(audio_path):
 @browser(
     block_images=False,
     headless=True,
+    chrome_options=[
+        "--no-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu"
+    ]
 )
 def run(driver: Driver, data=None):
     MAX_CAPTCHA_ATTEMPTS = 5  # Max attempts for the entire captcha flow
