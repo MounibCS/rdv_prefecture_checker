@@ -89,7 +89,7 @@ def solve_captcha(audio_path):
 @browser(
     block_images=False,
     headless=True,
-    chrome_options=[
+    add_arguments=[
         "--no-sandbox",
         "--disable-dev-shm-usage",
         "--disable-gpu"
