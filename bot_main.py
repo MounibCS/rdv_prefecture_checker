@@ -1,4 +1,7 @@
 from botasaurus.browser import browser, Driver
+from botasaurus.user_agent import UserAgent
+from botasaurus.window_size import WindowSize
+from botasaurus.lang import Lang
 
 import time
 import google.generativeai as genai
@@ -92,6 +95,11 @@ def solve_captcha(audio_path):
     tiny_profile=True,
     profile="bot_profile",
     wait_for_complete_page_load=False,
+    user_agent=UserAgent.REAL,
+    window_size=WindowSize.REAL,
+    lang=Lang.French,
+    raise_exception=True,
+    timeout=60,
     add_arguments=[
         "--no-sandbox",
         "--disable-setuid-sandbox",
