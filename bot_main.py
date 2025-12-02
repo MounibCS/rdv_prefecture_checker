@@ -12,62 +12,53 @@ from datetime import datetime
 
 load_dotenv()
 
-def send_discord_notification(message, status="info"):
+def send_telegram_notification(message, status="info"):
     """
-    Sends a notification to Discord via Discord API using bot token.
+    Sends a notification to Telegram via Telegram Bot API.
     Status can be: 'info', 'success', 'warning', 'error'
     """
-    auth_token = os.environ.get("DISCORD_TOKEN")
-    channel_id = os.environ.get("DISCORD_CHANNEL_ID")
+    bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
     
-    if not auth_token:
-        print("Warning: DISCORD_TOKEN not set. Skipping notification.")
+    if not bot_token:
+        print("Warning: TELEGRAM_BOT_TOKEN not set. Skipping notification.")
         return
     
-    if not channel_id:
-        print("Warning: DISCORD_CHANNEL_ID not set. Skipping notification.")
+    if not chat_id:
+        print("Warning: TELEGRAM_CHAT_ID not set. Skipping notification.")
         return
     
     try:
-        # Determine embed color based on status
-        color_map = {
-            "info": 3447003,      # Blue
-            "success": 3066993,   # Green
-            "warning": 15844367,  # Yellow/Orange
-            "error": 15158332     # Red
+        # Determine emoji based on status
+        emoji_map = {
+            "info": "ℹ️",
+            "success": "✅",
+            "warning": "⚠️",
+            "error": "❌"
         }
-        color = color_map.get(status, 3447003)
+        emoji = emoji_map.get(status, "ℹ️")
         
-        # Create the message payload with embed
-        msg = {
-            "embeds": [{
-                "title": f"Prefecture Bot - {status.upper()}",
-                "description": message,
-                "color": color,
-                "timestamp": datetime.utcnow().isoformat(),
-                "footer": {
-                    "text": "Prefecture Slot Checker"
-                }
-            }]
-        }
+        # Format the message with Markdown
+        formatted_message = f"{emoji} *Prefecture Bot - {status.upper()}*\n\n{message}\n\n_Prefecture Slot Checker_"
         
-        # Prepare the request
-        url = f"https://discord.com/api/v9/channels/{channel_id}/messages"
-        auth = {
-            'authorization': auth_token
+        # Prepare the request to Telegram Bot API
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        payload = {
+            "chat_id": chat_id,
+            "text": formatted_message,
+            "parse_mode": "Markdown"
         }
         
         # Send via requests.post
-        response = requests.post(url, headers=auth, data=json.dumps(msg), 
-                                headers={'authorization': auth_token, 'Content-Type': 'application/json'})
+        response = requests.post(url, json=payload)
         
-        if response.status_code in [200, 201]:
-            print(f"✓ Discord notification sent: {message[:50]}...")
+        if response.status_code == 200:
+            print(f"✓ Telegram notification sent: {message[:50]}...")
         else:
-            print(f"⚠ Discord notification failed: {response.status_code} {response.text}")
+            print(f"⚠ Telegram notification failed: {response.status_code} {response.text}")
         
     except Exception as e:
-        print(f"Error sending Discord notification: {e}")
+        print(f"Error sending Telegram notification: {e}")
 
 def solve_captcha(audio_path):
     """
@@ -342,7 +333,7 @@ def run(driver: Driver, data=None):
                 else:
                     print("🎉 Different content - might have available slots!")
                     # Send notification for potential slots!
-                    send_discord_notification(
+                    send_telegram_notification(
                         "⚠️ **Potential Slot Available!**\n\nThe page content is different from usual. There might be available slots!\n\nPlease check: https://www.rdv-prefecture.interieur.gouv.fr/",
                         status="warning"
                     )
@@ -351,7 +342,7 @@ def run(driver: Driver, data=None):
         except Exception as e:
             print(f"✗ Error submitting captcha: {e}")
             error_msg = f"Error during captcha submission: {str(e)}"
-            send_discord_notification(error_msg, status="error")
+            send_telegram_notification(error_msg, status="error")
             
             if captcha_attempt < MAX_CAPTCHA_ATTEMPTS:
                 print("Retrying entire captcha flow...")
@@ -366,7 +357,7 @@ def run(driver: Driver, data=None):
     # If we reach here, all captcha attempts failed
     error_msg = "Failed to solve captcha after all attempts"
     print(f"\n❌ {error_msg}")
-    send_discord_notification(error_msg, status="error")
+    send_telegram_notification(error_msg, status="error")
     return {"success": False, "error": error_msg}
 
 if __name__ == "__main__":
@@ -378,7 +369,7 @@ if __name__ == "__main__":
     print(f"Check interval: {check_interval} seconds")
     print("="*60)
     
-    send_discord_notification(
+    send_telegram_notification(
         f"🤖 **Bot Started**\n\nPrefecture slot checker is now running.\nCheck interval: {check_interval} seconds",
         status="info"
     )
@@ -397,7 +388,7 @@ if __name__ == "__main__":
         except Exception as e:
             error_msg = f"Critical error in main loop: {str(e)}"
             print(f"\n❌ {error_msg}")
-            send_discord_notification(error_msg, status="error")
+            send_telegram_notification(error_msg, status="error")
         
         print(f"\n{'='*60}")
         print(f"Waiting {check_interval} seconds before next check...")
