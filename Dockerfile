@@ -43,10 +43,6 @@ RUN wget -q -O /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-
     && rm /tmp/google-chrome.deb \
     && rm -rf /var/lib/apt/lists/*
 
-# Set environment variables for Chrome
-ENV DISPLAY=:99
-ENV DBUS_SESSION_BUS_ADDRESS=/dev/null
-
 # Copy requirements file
 COPY requirements.txt .
 

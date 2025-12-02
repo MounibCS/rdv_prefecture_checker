@@ -87,12 +87,23 @@ def solve_captcha(audio_path):
         return None
 
 @browser(
-    block_images=False,
+    block_images=True,
     headless=True,
+    tiny_profile=True,
+    profile="bot_profile",
+    wait_for_complete_page_load=False,
     add_arguments=[
         "--no-sandbox",
+        "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
-        "--disable-gpu"
+        "--disable-accelerated-2d-canvas",
+        "--no-first-run",
+        "--no-zygote",
+        "--disable-gpu",
+        "--disable-extensions",
+        "--disable-software-rasterizer",
+        "--window-size=1920,1080",
+        "--disable-features=VizDisplayCompositor"
     ]
 )
 def run(driver: Driver, data=None):
