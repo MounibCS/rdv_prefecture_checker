@@ -66,6 +66,7 @@ def send_telegram_notification(message, status="info"):
 def solve_captcha(audio_path):
     """
     Sends the audio file to Gemini API and returns the alphanumeric code.
+    Retries with different models if quota is exceeded.
     """
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
@@ -74,19 +75,43 @@ def solve_captcha(audio_path):
     
     genai.configure(api_key=api_key)
     
+    # List of models to try in order
+    models = [
+        "gemini-2.5-flash",
+        "gemini-2.0-flash-lite",
+        "gemini-2.0-flash",
+        "gemini-2.5-flash-lite",
+        "gemini-2.5-pro"
+    ]
+    
     try:
         print(f"Uploading {audio_path} to Gemini...")
         myfile = genai.upload_file(audio_path)
         
-        model = genai.GenerativeModel("gemini-2.5-pro")
+        for model_name in models:
+            try:
+                print(f"Requesting captcha solution with {model_name}...")
+                model = genai.GenerativeModel(model_name)
+                
+                result = model.generate_content(
+                    [myfile, "\n\n", "Listen to this audio and provide the alphanumeric code you hear. The response should contain ONLY the code, nothing else. The code consists of letters and numbers."]
+                )
+                return result.text.strip()
+                
+            except Exception as e:
+                if "429" in str(e) or "quota" in str(e).lower():
+                    print(f"⚠ Quota exceeded for {model_name}. Switching to next model...")
+                    time.sleep(1)
+                    continue
+                else:
+                    print(f"Error solving captcha with {model_name}: {e}")
+                    continue
+                    
+        print("❌ All models failed to solve captcha.")
+        return None
         
-        print("Requesting captcha solution...")
-        result = model.generate_content(
-            [myfile, "\n\n", "Listen to this audio and provide the alphanumeric code you hear. The response should contain ONLY the code, nothing else. The code consists of letters and numbers."]
-        )
-        return result.text.strip()
     except Exception as e:
-        print(f"Error solving captcha: {e}")
+        print(f"Error in captcha process (upload or setup): {e}")
         return None
 
 @browser(
@@ -96,10 +121,9 @@ def solve_captcha(audio_path):
     profile="bot_profile",
     wait_for_complete_page_load=False,
     user_agent=UserAgent.REAL,
-    window_size=WindowSize.REAL,
     lang=Lang.French,
     raise_exception=True,
-    timeout=60,
+    # timeout=60,
     add_arguments=[
         "--no-sandbox",
         "--disable-setuid-sandbox",
